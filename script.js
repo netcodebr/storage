@@ -1,5 +1,5 @@
 // =============================
-// 📂 SCRIPT PRINCIPAL - Rede primeiro + fallback offline + indicadores
+// 📂 SCRIPT PRINCIPAL - Rede + versão sincronizada via GitHub
 // =============================
 
 async function carregarLinks(arquivo = "links.txt") {
@@ -31,6 +31,8 @@ async function carregarLinks(arquivo = "links.txt") {
       `;
       lista.appendChild(div);
     }
+
+    console.log(`[PWA] Links carregados com sucesso: ${arquivo}`);
   } catch (err) {
     console.warn(`[PWA] Falha ao carregar ${arquivo}:`, err);
     if (arquivo === "links.txt") {
@@ -48,16 +50,17 @@ async function carregarLinks(arquivo = "links.txt") {
 carregarLinks();
 
 // =============================
-// 🧭 SERVICE WORKER + VERSÃO FIXA + ALERTAS
+// 🧭 SERVICE WORKER + VERSÃO DO GITHUB
 // =============================
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 
+  const versaoEl = document.getElementById("versao");
   function exibirVersao(v, d) {
-    document.getElementById("versao").textContent =
-      `Versão — ${v} — Atualizada em ${d}`;
+    versaoEl.textContent = `Versão — ${v} — Atualizada em ${d}`;
   }
 
+  // Mostra versão salva (caso já tenha)
   const vSalva = localStorage.getItem("versaoCodigo");
   const dSalva = localStorage.getItem("versaoData");
   if (vSalva && dSalva) exibirVersao(vSalva, dSalva);
@@ -66,28 +69,52 @@ if ("serviceWorker" in navigator) {
     reg.active.postMessage({ type: "GET_VERSION" });
   });
 
-  navigator.serviceWorker.addEventListener("message", e => {
-    if (e.data && e.data.type === "VERSION") {
-      const v = e.data.versao;
-      const d = e.data.data;
-      if (v !== localStorage.getItem("versaoCodigo")) {
-        localStorage.setItem("versaoCodigo", v);
-        localStorage.setItem("versaoData", d);
-        Swal.fire({
-          title: "Nova versão detectada!",
-          text: "O sistema está sendo atualizado automaticamente.",
-          icon: "info",
-          showConfirmButton: false,
-          timer: 2500
-        });
+  // Recebe dados do Service Worker
+  navigator.serviceWorker.addEventListener("message", async event => {
+    if (event.data && event.data.type === "VERSION") {
+      const { versao, data } = event.data;
+      const antiga = localStorage.getItem("versaoCodigo");
+
+      // 🔍 Busca version.json completo (com autor e mensagem)
+      try {
+        const res = await fetch("version.json?cache=" + Date.now());
+        const json = await res.json();
+
+        const autor = json.autor || "Desconhecido";
+        const mensagem = json.mensagem || "Atualização de versão";
+
+        if (versao !== antiga && versao !== "Indisponível") {
+          localStorage.setItem("versaoCodigo", versao);
+          localStorage.setItem("versaoData", data);
+          Swal.fire({
+            title: "Nova versão detectada!",
+            html: `
+              <div style="text-align:left;font-size:0.95rem;">
+                🧱 <b>Versão:</b> ${versao}<br>
+                💬 <b>Mensagem:</b> ${mensagem}<br>
+                👤 <b>Autor:</b> ${autor}<br>
+                ⏰ <b>Data:</b> ${data}
+              </div>
+            `,
+            icon: "info",
+            showConfirmButton: false,
+            timer: 3500,
+            background: "#f5f7fa",
+            color: "#004aad"
+          });
+        }
+
+        exibirVersao(versao, data);
+      } catch (err) {
+        console.warn("[PWA] Falha ao obter dados completos da versão:", err);
+        exibirVersao(versao, data);
       }
-      exibirVersao(v, d);
     }
   });
 }
 
 // =============================
-// 🌐 INDICADOR DE REDE + TOAST FLUTUANTE
+// 🌐 INDICADOR DE REDE + TOAST
 // =============================
 const statusEl = document.getElementById("status-rede");
 const toast = document.getElementById("toast-status");

@@ -1,23 +1,8 @@
 // =============================
-// 🔄 SERVICE WORKER - Rede primeiro + versão fixa + links.txt sempre online
+// 🔄 SERVICE WORKER - Rede primeiro + versão sincronizada com o GitHub
 // =============================
 
-const BUILD_VERSION = "20251105-01"; // 🧠 altere SOMENTE ao publicar nova versão
-
-// 🕒 Data fixa (Horário de Brasília)
-const agora = new Date();
-const ano = agora.getUTCFullYear();
-const mes = String(agora.getUTCMonth() + 1).padStart(2, "0");
-const dia = String(agora.getUTCDate()).padStart(2, "0");
-const horaUTC = agora.getUTCHours();
-const min = String(agora.getUTCMinutes()).padStart(2, "0");
-const horaBR = String((horaUTC - 3 + 24) % 24).padStart(2, "0");
-const dataLegivel = `${dia}/${mes}/${ano}, ${horaBR}h${min} (Horário de Brasília)`;
-
-const versaoCodigo = BUILD_VERSION;
-const CACHE_NAME = "repositorio-cache-" + BUILD_VERSION;
-
-// Lista de arquivos cacheáveis
+const CACHE_NAME = "repositorio-v14";
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,13 +13,13 @@ const ASSETS = [
   "./linksoff.txt"
 ];
 
-// Instala o SW e salva arquivos essenciais
+// Instala o SW e guarda apenas arquivos básicos
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-// Ativa nova versão e remove caches antigos
+// Remove caches antigos
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -44,23 +29,19 @@ self.addEventListener("activate", event => {
   clients.claim();
 });
 
-// Estratégia: rede primeiro + links.txt sempre online
+// Estratégia: rede primeiro SEMPRE (ignora cache local)
 self.addEventListener("fetch", event => {
   const url = event.request.url;
 
-  // 🟦 Força links.txt sempre da rede, sem cache
-  if (url.includes("links.txt")) {
-    event.respondWith(
-      fetch(event.request, { cache: "no-store" })
-        .then(response => response)
-        .catch(() => Promise.reject("Falha ao buscar links.txt"))
-    );
+  // Sempre busca da rede esses arquivos dinâmicos
+  if (url.includes("links.txt") || url.includes("version.json")) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
     return;
   }
 
-  // 🟩 Outros arquivos: rede primeiro, depois cache
+  // Outros arquivos → tenta rede, cai no cache se offline
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then(response => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -78,15 +59,25 @@ self.addEventListener("fetch", event => {
   );
 });
 
-// Envia versão e data fixa para o front-end
-self.addEventListener("message", event => {
+// Envia versão/hora do GitHub para o front-end
+self.addEventListener("message", async event => {
   if (event.data && event.data.type === "GET_VERSION") {
-    event.source.postMessage({
-      type: "VERSION",
-      versao: versaoCodigo,
-      data: dataLegivel
-    });
+    try {
+      const response = await fetch("version.json?cache=" + Date.now());
+      const data = await response.json();
+      event.source.postMessage({
+        type: "VERSION",
+        versao: data.build,
+        data: data.data
+      });
+    } catch (error) {
+      event.source.postMessage({
+        type: "VERSION",
+        versao: "Indisponível",
+        data: "Offline"
+      });
+    }
   }
 });
 
-console.log(`[PWA] Service Worker ativo — Versão ${versaoCodigo} — Atualizado em ${dataLegivel}`);
+console.log("[PWA] Service Worker ativo — Versão e hora puxadas direto do GitHub.");

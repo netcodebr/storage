@@ -12,6 +12,7 @@ permissions:
 jobs:
   version:
     runs-on: ubuntu-latest
+
     steps:
       - name: 📥 Clonar repositório
         uses: actions/checkout@v4
@@ -19,6 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: 🕒 Gerar version.json e atualizar new.json
+        id: gerar
         run: |
           echo "⏳ Gerando versão..."
           BUILD=$(date +'%Y%m%d%H%M')
@@ -28,7 +30,12 @@ jobs:
           EXECUCAO=${{ github.run_number }}
           BRANCH=${{ github.ref_name }}
 
-          # Cria o version.json no formato desejado
+          # Exporta para próximos passos
+          echo "BUILD=${BUILD}" >> $GITHUB_OUTPUT
+          echo "DATA=${DATA}" >> $GITHUB_OUTPUT
+          echo "MENSAGEM=${MENSAGEM}" >> $GITHUB_OUTPUT
+
+          # Cria version.json (última versão)
           cat <<JSON > version.json
           {
             "build": "${BUILD}",
@@ -39,7 +46,6 @@ jobs:
             "branch": "${BRANCH}"
           }
           JSON
-
           echo "✅ version.json criado:"
           cat version.json
 
@@ -57,15 +63,17 @@ jobs:
              --arg br "$BRANCH" \
              '. = [{build: $b, data: $d, autor: $a, mensagem: $m, execucao: $e, branch: $br}] + .' new.json > tmp.$$.json && mv tmp.$$.json new.json
 
-          echo "📘 new.json atualizado (últimas entradas):"
+          echo "📘 new.json atualizado (últimas linhas):"
           tail -n 20 new.json
 
-      - name: 💾 Commit e Push
+      - name: 💾 Commit e Push (com data e mensagem)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          DATA_ATUAL="${{ steps.gerar.outputs.DATA }}"
+          MSG_ATUAL="${{ steps.gerar.outputs.MENSAGEM }}"
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
           git add version.json new.json
-          git commit -m "🧱 Versão ${BUILD} registrada em ${DATA}" || echo "Sem alterações"
+          git commit -m "🧱 Versão registrada em ${DATA_ATUAL} — ${MSG_ATUAL}" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}

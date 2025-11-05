@@ -42,14 +42,27 @@
     <p>© 2025 | Unidade de Desenvolvimento Tecnológico</p>
   </footer>
 
+  <!-- Banner de atualização -->
+  <div id="update-banner" class="update-banner">Atualizando para a nova versão...</div>
+
   <script src="script.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(() => console.log('✅ Service Worker ativo'))
-          .catch(err => console.error('❌ Erro ao registrar SW:', err));
-      });
+      navigator.serviceWorker.register('service-worker.js').then(reg => {
+        // Detecta novas versões do SW
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated') {
+              const banner = document.getElementById('update-banner');
+              banner.classList.add('show');
+              setTimeout(() => {
+                window.location.reload(); // recarrega a nova versão
+              }, 1800);
+            }
+          });
+        });
+      }).catch(err => console.error('Erro ao registrar SW:', err));
     }
   </script>
 </body>

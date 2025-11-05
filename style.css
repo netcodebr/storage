@@ -159,12 +159,6 @@ h1 {
   z-index: 10;
 }
 
-.mensagem-carregando {
-  text-align: center;
-  color: #718096;
-  font-size: 0.95rem;
-}
-
 /* ===== FOOTER ===== */
 footer {
   text-align: center;
@@ -172,6 +166,27 @@ footer {
   border-top: 1px solid var(--cor-borda);
   color: #6b7280;
   font-size: 0.85rem;
+}
+
+/* ===== BANNER DE ATUALIZAÇÃO ===== */
+.update-banner {
+  position: fixed;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cor-secundaria);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+  transition: bottom 0.4s ease;
+  z-index: 1000;
+}
+
+.update-banner.show {
+  bottom: 0;
 }
 
 /* ===== RESPONSIVIDADE ===== */

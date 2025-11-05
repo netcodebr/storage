@@ -1,4 +1,4 @@
-// Sempre usa o ícone local da pasta /icons/
+// Usa sempre o ícone local (corporativo)
 async function carregarLinks() {
   const lista = document.getElementById("lista");
 

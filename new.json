@@ -3,6 +3,12 @@
     "build": "202511051905",
     "data": "05/11/2025, 16h05min (Horário de Brasília)",
     "autor": "Nelson Ferreira",
+    "mensagem": "Update deploy.yml"
+  },
+  {
+    "build": "202511051905",
+    "data": "05/11/2025, 16h05min (Horário de Brasília)",
+    "autor": "Nelson Ferreira",
     "mensagem": "Update version.yml"
   },
   {

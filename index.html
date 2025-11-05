@@ -40,6 +40,7 @@
 
   <footer>
     <p>© 2025 | Unidade de Desenvolvimento Tecnológico</p>
+    <small id="versao"></small>
   </footer>
 
   <!-- Banner de atualização -->
@@ -47,9 +48,9 @@
 
   <script src="script.js"></script>
   <script>
+    // Detecta atualização de versão e recarrega
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js').then(reg => {
-        // Detecta novas versões do SW
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
@@ -57,7 +58,7 @@
               const banner = document.getElementById('update-banner');
               banner.classList.add('show');
               setTimeout(() => {
-                window.location.reload(); // recarrega a nova versão
+                window.location.reload();
               }, 1800);
             }
           });

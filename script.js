@@ -39,3 +39,19 @@ async function carregarLinks() {
 }
 
 carregarLinks();
+
+// ====== MOSTRA VERSÃO DO SERVICE WORKER ======
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active.postMessage({ type: "GET_VERSION" });
+  });
+
+  navigator.serviceWorker.addEventListener("message", event => {
+    if (event.data && event.data.type === "VERSION") {
+      const versaoEl = document.getElementById("versao");
+      const data = new Date();
+      const dia = data.toLocaleDateString('pt-BR');
+      versaoEl.textContent = `Versão ${event.data.value.replace('repositorio-cache-', '')} — Atualizada em ${dia}`;
+    }
+  });
+}

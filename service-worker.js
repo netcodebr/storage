@@ -1,4 +1,7 @@
-const CACHE_NAME = "repositorio-cache-v2";
+// ====== ALTERE ESTE NÚMERO QUANDO ATUALIZAR ======
+const CACHE_NAME = "repositorio-cache-v3";
+// ================================================
+
 const ASSETS = [
   "./",
   "./index.html",
@@ -43,4 +46,11 @@ self.addEventListener("fetch", event => {
         )
     )
   );
+});
+
+// ✅ Envia a versão do cache para o front-end
+self.addEventListener("message", event => {
+  if (event.data && event.data.type === "GET_VERSION") {
+    event.source.postMessage({ type: "VERSION", value: CACHE_NAME });
+  }
 });

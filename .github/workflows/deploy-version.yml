@@ -1,0 +1,57 @@
+name: 🧱 Registrar número do deploy (GitHub Pages)
+
+on:
+  workflow_run:
+    workflows: ["pages-build-deployment"]  # Escuta o deploy oficial do GitHub Pages
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  registrar-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🕒 Gerar version.json com número real do deploy
+        run: |
+          BUILD=$(date +'%Y%m%d%H%M')
+          DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
+          DEPLOY_NUM=${{ github.event.workflow_run.run_number }}
+          AUTOR="GitHub Pages"
+          MENSAGEM="Deploy automático concluído com sucesso"
+
+          echo "{" > version.json
+          echo "  \"build\": \"${BUILD}\"," >> version.json
+          echo "  \"data\": \"${DATA}\"," >> version.json
+          echo "  \"autor\": \"${AUTOR}\"," >> version.json
+          echo "  \"mensagem\": \"${MENSAGEM}\"," >> version.json
+          echo "  \"execucao\": \"${DEPLOY_NUM}\"," >> version.json
+          echo "  \"branch\": \"gh-pages\"" >> version.json
+          echo "}" >> version.json
+
+          echo "📦 version.json gerado:"
+          cat version.json
+
+      - name: 💾 Commit e Push do version.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "GitHub Action (Deploy)"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "🚀 Deploy registrado (GitHub Pages #${{ github.event.workflow_run.run_number }})" || echo "Sem alterações"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+
+      - name: ✅ Log de confirmação
+        run: |
+          echo "🎉 Deploy detectado com sucesso!"
+          echo "🔢 Número do deploy: #${{ github.event.workflow_run.run_number }}"
+          echo "🕒 Horário de Brasília: $(TZ='America/Sao_Paulo' date)"
+          echo "📂 Arquivo version.json atualizado."

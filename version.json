@@ -1,8 +1,8 @@
 {
-  "build": "202511051903",
-  "data": "05/11/2025, 16h03min",
+  "build": "202511051915",
+  "data": "05/11/2025, 16h15min",
   "autor": "Nelson Ferreira",
-  "mensagem": "Update version.json",
-  "execucao": "24",
+  "mensagem": "Update version.yml",
+  "execucao": "29",
   "branch": "main"
 }

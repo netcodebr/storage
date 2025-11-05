@@ -1,5 +1,5 @@
 // =============================
-// 📂 SCRIPT PRINCIPAL - Rede + versão sincronizada via GitHub
+// 📂 SCRIPT PRINCIPAL - Rede + versão sincronizada via GitHub (Horário de Brasília)
 // =============================
 
 async function carregarLinks(arquivo = "links.txt") {
@@ -50,17 +50,17 @@ async function carregarLinks(arquivo = "links.txt") {
 carregarLinks();
 
 // =============================
-// 🧭 SERVICE WORKER + VERSÃO DO GITHUB
+// 🧭 SERVICE WORKER + VERSÃO COMPLETA DO GITHUB
 // =============================
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 
   const versaoEl = document.getElementById("versao");
   function exibirVersao(v, d) {
-    versaoEl.textContent = `Versão — ${v} — Atualizada em ${d}`;
+    versaoEl.textContent = `Versão — ${v} — Atualizada em ${d} (Horário de Brasília)`;
   }
 
-  // Mostra versão salva (caso já tenha)
+  // Mostra versão salva (para evitar "piscar")
   const vSalva = localStorage.getItem("versaoCodigo");
   const dSalva = localStorage.getItem("versaoData");
   if (vSalva && dSalva) exibirVersao(vSalva, dSalva);
@@ -75,17 +75,20 @@ if ("serviceWorker" in navigator) {
       const { versao, data } = event.data;
       const antiga = localStorage.getItem("versaoCodigo");
 
-      // 🔍 Busca version.json completo (com autor e mensagem)
       try {
         const res = await fetch("version.json?cache=" + Date.now());
         const json = await res.json();
 
         const autor = json.autor || "Desconhecido";
         const mensagem = json.mensagem || "Atualização de versão";
+        const execucao = json.execucao || "N/A";
+        const branch = json.branch || "main";
+        const dataFormatada = json.data || data;
 
         if (versao !== antiga && versao !== "Indisponível") {
           localStorage.setItem("versaoCodigo", versao);
-          localStorage.setItem("versaoData", data);
+          localStorage.setItem("versaoData", dataFormatada);
+
           Swal.fire({
             title: "Nova versão detectada!",
             html: `
@@ -93,18 +96,20 @@ if ("serviceWorker" in navigator) {
                 🧱 <b>Versão:</b> ${versao}<br>
                 💬 <b>Mensagem:</b> ${mensagem}<br>
                 👤 <b>Autor:</b> ${autor}<br>
-                ⏰ <b>Data:</b> ${data}
+                🌿 <b>Branch:</b> ${branch}<br>
+                🔢 <b>Execução:</b> ${execucao}<br>
+                ⏰ <b>Data:</b> ${dataFormatada} (Horário de Brasília)
               </div>
             `,
             icon: "info",
             showConfirmButton: false,
-            timer: 3500,
+            timer: 4000,
             background: "#f5f7fa",
             color: "#004aad"
           });
         }
 
-        exibirVersao(versao, data);
+        exibirVersao(versao, dataFormatada);
       } catch (err) {
         console.warn("[PWA] Falha ao obter dados completos da versão:", err);
         exibirVersao(versao, data);

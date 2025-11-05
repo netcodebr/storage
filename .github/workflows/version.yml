@@ -1,0 +1,27 @@
+name: 🚀 Gerar versão automática para o PWA
+
+on:
+  push:
+    branches:
+      - main  # ou 'master', se o seu repositório usar esse nome
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: 🕒 Criar arquivo version.json
+        run: |
+          echo "{ \"build\": \"$(date +'%Y%m%d%H%M')\", \"data\": \"$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%M')\" }" > version.json
+          cat version.json
+
+      - name: 💾 Commit e Push do version.json
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "🧱 Versão automática atualizada: $(date +'%Y-%m-%d %H:%M')"
+          git push

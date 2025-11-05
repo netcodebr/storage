@@ -1,4 +1,4 @@
-const CACHE_NAME = "repositorio-cache-v7";
+const CACHE_NAME = "repositorio-cache-v4.3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -53,3 +53,4 @@ self.addEventListener("message", event => {
     event.source.postMessage({ type: "VERSION", value: CACHE_NAME });
   }
 });
+

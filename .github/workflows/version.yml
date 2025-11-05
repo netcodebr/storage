@@ -1,66 +1,52 @@
-name: 🚀 Gerar versão automática completa para o PWA
+name: 🧱 Atualizar histórico de builds (new.json)
 
 on:
   push:
     branches:
-      - main  # altere para 'master' se for o seu branch principal
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  version:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🧾 Clonar repositório completo
+      - name: 📥 Clonar repositório
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necessário para obter histórico completo de commits
+          fetch-depth: 0
 
-      - name: 🪵 Log de auditoria
+      - name: 🕒 Atualizar histórico new.json
         run: |
-          echo "🧱 Build iniciada em $(TZ='America/Sao_Paulo' date +'%d/%m/%Y %H:%M:%S')"
-          echo "👤 Autor: $(git log -1 --pretty=format:'%an')"
-          echo "💬 Mensagem: $(git log -1 --pretty=format:'%s')"
-          echo "🌿 Branch: ${{ github.ref_name }}"
-          echo "🔢 Execução: ${{ github.run_number }}"
-
-      - name: 🕒 Gerar version.json
-        run: |
+          echo "⏳ Gerando histórico..."
           BUILD=$(date +'%Y%m%d%H%M')
-          DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
+          DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin (Horário de Brasília)')
           AUTOR=$(git log -1 --pretty=format:'%an')
           MENSAGEM=$(git log -1 --pretty=format:'%s')
-          EXECUCAO=${{ github.run_number }}
-          BRANCH=${{ github.ref_name }}
 
-          echo "{" > version.json
-          echo "  \"build\": \"${BUILD}\"," >> version.json
-          echo "  \"data\": \"${DATA}\"," >> version.json
-          echo "  \"autor\": \"${AUTOR}\"," >> version.json
-          echo "  \"mensagem\": \"${MENSAGEM}\"," >> version.json
-          echo "  \"execucao\": \"${EXECUCAO}\"," >> version.json
-          echo "  \"branch\": \"${BRANCH}\"" >> version.json
-          echo "}" >> version.json
+          # Cria o arquivo se não existir
+          if [ ! -f new.json ]; then
+            echo "[]" > new.json
+          fi
 
-          echo "📦 version.json gerado:"
-          cat version.json
+          # Adiciona novo registro no topo
+          jq --arg b "$BUILD" \
+             --arg d "$DATA" \
+             --arg a "$AUTOR" \
+             --arg m "$MENSAGEM" \
+             '. = [{build: $b, data: $d, autor: $a, mensagem: $m}] + .' new.json > tmp.$$.json && mv tmp.$$.json new.json
 
-      - name: 💾 Commit e Push
+          echo "✅ Histórico atualizado:"
+          tail -n 20 new.json
+
+      - name: 💾 Commit e Push do histórico
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
-          git add version.json
-          git commit -m "🧱 Versão automática: $(TZ='America/Sao_Paulo' date +'%Y-%m-%d %H:%M:%S')" || echo "Sem alterações"
+          git add new.json
+          git commit -m "🧱 Histórico atualizado: $(TZ='America/Sao_Paulo' date +'%d/%m/%Y %H:%M')" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
-
-      - name: ✅ Finalização
-        run: |
-          echo "🎉 Versão gerada com sucesso!"
-          echo "📦 Build: $(date +'%Y%m%d%H%M')"
-          echo "🌿 Branch: ${{ github.ref_name }}"
-          echo "🔢 Execução: ${{ github.run_number }}"
-          echo "🕒 Horário de Brasília: $(TZ='America/Sao_Paulo' date)"

@@ -26,11 +26,13 @@ jobs:
           fetch-depth: 0
 
       - name: 🏗️ Preparar build estático
-        run: |
-          echo "🔧 Copiando arquivos do main para pasta de publicação..."
-          mkdir public
-          cp -r * public/
-          echo "✅ Build pronto!"
+  run: |
+    echo "🔧 Preparando build para publicação..."
+    mkdir public
+    shopt -s extglob
+    cp -r !(public) public/
+    echo "✅ Build pronto e sem recursão!"
+
 
       - name: 📦 Upload dos arquivos
         uses: actions/upload-pages-artifact@v3

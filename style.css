@@ -1,0 +1,140 @@
+/* ===== BASE ===== */
+:root {
+  --cor-primaria: #0a1128;
+  --cor-secundaria: #004aad;
+  --cor-acento: #00aaff;
+  --cor-texto: #e2e8f0;
+  --cor-card: #131c3a;
+  --cor-borda: #1f2a4f;
+  --cor-fundo: #0a1128;
+  --fonte: "Inter", "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fonte);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  line-height: 1.6;
+}
+
+/* ===== HEADER ===== */
+header {
+  background: linear-gradient(90deg, var(--cor-primaria) 0%, var(--cor-secundaria) 100%);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  letter-spacing: 0.5px;
+}
+
+/* ===== INTRO ===== */
+.intro {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.intro h2 {
+  font-size: 1.3rem;
+  color: var(--cor-acento);
+  margin-bottom: 0.5rem;
+}
+
+.intro p {
+  color: #a0aec0;
+  font-size: 0.95rem;
+}
+
+/* ===== LISTA ===== */
+.lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem 2rem 3rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--cor-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 1rem;
+  transition: 0.25s;
+  box-shadow: 0 0 8px rgba(0,0,0,0.25);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 14px rgba(0, 170, 255, 0.2);
+}
+
+.card img {
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+}
+
+.card a {
+  font-weight: 600;
+  color: var(--cor-acento);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.card a:hover {
+  text-decoration: underline;
+}
+
+.card small {
+  display: block;
+  font-size: 0.8rem;
+  color: #8f9bb3;
+}
+
+.mensagem-carregando {
+  text-align: center;
+  color: #718096;
+  font-size: 0.95rem;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 1rem;
+  border-top: 1px solid var(--cor-borda);
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  h1 { font-size: 1.2rem; }
+  .intro h2 { font-size: 1.1rem; }
+  .card a { font-size: 0.95rem; }
+  .card img { width: 36px; height: 36px; }
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repositório de Projetos</title>
+
+  <!-- Ícone e Manifest -->
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-512.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Metadados PWA -->
+  <meta name="theme-color" content="#0a1128" />
+  <meta name="background-color" content="#0a1128" />
+  <meta name="application-name" content="Repositório de Projetos" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo-area">
+      <img src="icons/icon-128.png" alt="logo" class="logo">
+      <h1>Repositório de Projetos</h1>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Ambiente de Projetos e Aplicações</h2>
+      <p>Catálogo centralizado de ferramentas, aplicações e sistemas corporativos.</p>
+    </section>
+
+    <div id="lista" class="lista">
+      <p class="mensagem-carregando">Carregando projetos...</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 | Unidade de Desenvolvimento Tecnológico</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(() => console.log('Service Worker ativo'))
+          .catch(err => console.error('Erro ao registrar SW:', err));
+      });
+    }
+  </script>
+</body>
+</html>

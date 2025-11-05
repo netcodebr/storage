@@ -1,31 +1,17 @@
 // =============================
-// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO - com fallback linksoff.txt + alertas automáticos
+// 📂 SCRIPT PRINCIPAL - Rede primeiro + fallback offline + indicadores
 // =============================
 
-// Adiciona SweetAlert2
-const sweet = document.createElement("script");
-sweet.src = "https://cdn.jsdelivr.net/npm/sweetalert2@11";
-document.head.appendChild(sweet);
-
-// =============================
-// 🧠 Função principal para carregar os links
-// =============================
 async function carregarLinks(arquivo = "links.txt") {
   const lista = document.getElementById("lista");
 
   try {
     const resposta = await fetch(arquivo, { cache: "no-store" });
-    if (!resposta.ok) throw new Error("Erro ao buscar arquivo: " + arquivo);
+    if (!resposta.ok) throw new Error("Erro ao buscar " + arquivo);
 
     const texto = await resposta.text();
     const urls = texto.split(/\r?\n/).filter(l => l.trim() !== "");
-
     lista.innerHTML = "";
-
-    if (urls.length === 0) {
-      lista.innerHTML = "<p class='mensagem-carregando'>Nenhum link encontrado.</p>";
-      return;
-    }
 
     for (const url of urls) {
       const base = new URL(url);
@@ -45,85 +31,86 @@ async function carregarLinks(arquivo = "links.txt") {
       `;
       lista.appendChild(div);
     }
-
-    console.log(`[PWA] Arquivo carregado com sucesso: ${arquivo}`);
   } catch (err) {
     console.warn(`[PWA] Falha ao carregar ${arquivo}:`, err);
-
     if (arquivo === "links.txt") {
-      // Se falhou o principal, tenta o offline
       carregarLinks("linksoff.txt");
-
-      sweet.onload = () => {
-        Swal.fire({
-          title: "Modo Offline Ativado",
-          text: "Sem conexão. Mostrando lista offline (linksoff.txt).",
-          icon: "warning",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#004aad",
-          background: "#f5f7fa",
-          color: "#004aad",
-          backdrop: "rgba(0,0,0,0.4)"
-        });
-      };
-    } else {
-      lista.innerHTML = "<p class='mensagem-carregando'>Não foi possível carregar os projetos.</p>";
+      Swal.fire({
+        title: "Modo Offline Ativado",
+        text: "Sem conexão. Mostrando lista offline (linksoff.txt).",
+        icon: "warning",
+        confirmButtonColor: "#004aad"
+      });
     }
   }
 }
 
-// Inicia o carregamento padrão
 carregarLinks();
 
 // =============================
-// 🧭 SERVICE WORKER + ALERTA DE NOVA VERSÃO
+// 🧭 SERVICE WORKER + VERSÃO FIXA + ALERTAS
 // =============================
-
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("service-worker.js")
-    .then(() => console.log("[PWA] Service Worker registrado com sucesso."))
-    .catch(err => console.error("[PWA] Falha ao registrar SW:", err));
+  navigator.serviceWorker.register("service-worker.js");
 
-  function exibirVersao(versao, data) {
-    const versaoEl = document.getElementById("versao");
-    versaoEl.textContent = `Versão — ${versao} — Atualizada em ${data}`;
+  function exibirVersao(v, d) {
+    document.getElementById("versao").textContent =
+      `Versão — ${v} — Atualizada em ${d}`;
   }
 
-  const versaoSalva = localStorage.getItem("versaoCodigo");
-  const dataSalva = localStorage.getItem("versaoData");
-  if (versaoSalva && dataSalva) exibirVersao(versaoSalva, dataSalva);
+  const vSalva = localStorage.getItem("versaoCodigo");
+  const dSalva = localStorage.getItem("versaoData");
+  if (vSalva && dSalva) exibirVersao(vSalva, dSalva);
 
   navigator.serviceWorker.ready.then(reg => {
     reg.active.postMessage({ type: "GET_VERSION" });
   });
 
-  navigator.serviceWorker.addEventListener("message", event => {
-    if (event.data && event.data.type === "VERSION") {
-      const versaoCodigo = event.data.versao || "????";
-      const dataAtualizacao = event.data.data || "Data desconhecida";
-
-      const versaoAnterior = localStorage.getItem("versaoCodigo");
-      if (versaoCodigo !== versaoAnterior) {
-        localStorage.setItem("versaoCodigo", versaoCodigo);
-        localStorage.setItem("versaoData", dataAtualizacao);
-
-        sweet.onload = () => {
-          Swal.fire({
-            title: "Nova versão detectada!",
-            text: "O sistema está sendo atualizado automaticamente.",
-            icon: "info",
-            showConfirmButton: false,
-            timer: 2500,
-            background: "#f5f7fa",
-            color: "#004aad",
-            backdrop: "rgba(0,0,0,0.4)"
-          });
-        };
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data && e.data.type === "VERSION") {
+      const v = e.data.versao;
+      const d = e.data.data;
+      if (v !== localStorage.getItem("versaoCodigo")) {
+        localStorage.setItem("versaoCodigo", v);
+        localStorage.setItem("versaoData", d);
+        Swal.fire({
+          title: "Nova versão detectada!",
+          text: "O sistema está sendo atualizado automaticamente.",
+          icon: "info",
+          showConfirmButton: false,
+          timer: 2500
+        });
       }
-
-      exibirVersao(versaoCodigo, dataAtualizacao);
-      console.log(`[PWA] Versão fixa — ${versaoCodigo} — ${dataAtualizacao}`);
+      exibirVersao(v, d);
     }
   });
 }
+
+// =============================
+// 🌐 INDICADOR DE REDE + TOAST FLUTUANTE
+// =============================
+const statusEl = document.getElementById("status-rede");
+const toast = document.getElementById("toast-status");
+
+function mostrarToast(msg, cor) {
+  toast.textContent = msg;
+  toast.style.background = cor;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+function atualizarStatus() {
+  if (navigator.onLine) {
+    statusEl.textContent = "🟢 Online";
+    statusEl.className = "online";
+    mostrarToast("🟢 Conectado à Internet", "linear-gradient(90deg, #004aad, #00aaff)");
+  } else {
+    statusEl.textContent = "🔴 Offline";
+    statusEl.className = "offline";
+    mostrarToast("🔴 Sem conexão", "linear-gradient(90deg, #8b0000, #b22222)");
+  }
+}
+
+window.addEventListener("online", atualizarStatus);
+window.addEventListener("offline", atualizarStatus);
+document.addEventListener("DOMContentLoaded", atualizarStatus);

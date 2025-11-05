@@ -1,82 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Repositório de Projetos</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambiente de Projetos e Aplicações</title>
 
-  <!-- Ícone e Manifest -->
-  <link rel="icon" type="image/png" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/icon-512.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <!-- 📱 PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#004aad">
+  <link rel="icon" type="image/png" href="icons/icon-96.png">
 
-  <!-- Metadados PWA -->
-  <meta name="theme-color" content="#0a1128" />
-  <meta name="background-color" content="#0a1128" />
-  <meta name="application-name" content="Repositório de Projetos" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="style.css">
 
-  <link rel="stylesheet" href="style.css" />
+  <!-- ⚡ Alertas -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body>
   <header>
     <div class="logo-area">
-      <img src="icons/icon-128.png" alt="logo" class="logo">
-      <h1>Repositório de Projetos</h1>
+      <img src="icons/icon-96.png" alt="Logo" class="logo">
+      <h1>Ambiente de Projetos e Aplicações</h1>
     </div>
   </header>
 
-  <main>
-    <section class="intro">
-      <h2>Ambiente de Projetos e Aplicações</h2>
-      <p>Catálogo centralizado de ferramentas, aplicações e sistemas corporativos.</p>
-    </section>
+  <section class="intro">
+    <h2>Catálogo centralizado de ferramentas, aplicações e sistemas corporativos.</h2>
+  </section>
 
-    <div id="lista" class="lista">
-      <p class="mensagem-carregando">Carregando projetos...</p>
-    </div>
+  <main id="lista" class="lista">
+    <p class="mensagem-carregando">Carregando aplicações...</p>
   </main>
 
   <footer>
-    <p>© 2025 | Unidade de Desenvolvimento Tecnológico</p>
-    <small id="versao"></small>
+    <p id="versao">Versão — carregando...</p>
+    <p id="status-rede" class="online">🟢 Online</p>
   </footer>
 
-  <!-- Banner de atualização -->
-  <div id="update-banner" class="update-banner">Atualizando para a nova versão...</div>
+  <!-- 🔔 Toast flutuante de status -->
+  <div class="update-banner" id="toast-status">🟢 Conectado à Internet</div>
 
   <script src="script.js"></script>
-
-  <!-- 🔄 Controle de atualização automática -->
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated') {
-            const banner = document.getElementById('update-banner');
-            banner.textContent = "Atualizando para a nova versão...";
-            banner.classList.add('show');
-
-            setTimeout(() => {
-              banner.textContent = "✔ Nova versão aplicada";
-              banner.style.background = "linear-gradient(90deg, #16a34a, #22c55e)";
-            }, 1500);
-
-            setTimeout(() => {
-              banner.classList.remove('show');
-              banner.classList.add('hide');
-              setTimeout(() => {
-                window.location.reload();
-              }, 600);
-            }, 3000);
-          }
-        });
-      });
-    }).catch(err => console.error('Erro ao registrar SW:', err));
-  }
-  </script>
 </body>
 </html>

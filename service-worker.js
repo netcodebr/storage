@@ -1,26 +1,23 @@
 // =============================
-// 🔄 SERVICE WORKER - Rede primeiro + links.txt sempre online + fallback completo
+// 🔄 SERVICE WORKER - Rede primeiro + versão fixa + links.txt sempre online
 // =============================
 
-// Cria data UTC e gera código da versão (AAAAMMDDHHMM)
+const BUILD_VERSION = "20251105-01"; // 🧠 altere SOMENTE ao publicar nova versão
+
+// 🕒 Data fixa (Horário de Brasília)
 const agora = new Date();
 const ano = agora.getUTCFullYear();
 const mes = String(agora.getUTCMonth() + 1).padStart(2, "0");
 const dia = String(agora.getUTCDate()).padStart(2, "0");
 const horaUTC = agora.getUTCHours();
 const min = String(agora.getUTCMinutes()).padStart(2, "0");
-
-// Corrige para horário de Brasília (UTC-3)
 const horaBR = String((horaUTC - 3 + 24) % 24).padStart(2, "0");
-
-// Código e data fixa
-const versaoCodigo = `${ano}${mes}${dia}${horaUTC}${min}`; // Ex: 202511051805 (hora UTC)
 const dataLegivel = `${dia}/${mes}/${ano}, ${horaBR}h${min} (Horário de Brasília)`;
 
-// 🚀 Atualize este valor toda vez que publicar nova versão
-const CACHE_NAME = "repositorio-cache-v12";
+const versaoCodigo = BUILD_VERSION;
+const CACHE_NAME = "repositorio-cache-" + BUILD_VERSION;
 
-// Lista de arquivos cacheáveis (sem o links.txt)
+// Lista de arquivos cacheáveis
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,10 +25,10 @@ const ASSETS = [
   "./script.js",
   "./manifest.webmanifest",
   "./icons/icon-96.png",
-  "./linksoff.txt" // ⚙️ Mantemos o linksoff.txt para fallback offline
+  "./linksoff.txt"
 ];
 
-// Instala o SW e salva apenas os arquivos essenciais
+// Instala o SW e salva arquivos essenciais
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
@@ -47,11 +44,11 @@ self.addEventListener("activate", event => {
   clients.claim();
 });
 
-// Estratégia: rede primeiro, com exceção do links.txt (sempre da rede e sem cache)
+// Estratégia: rede primeiro + links.txt sempre online
 self.addEventListener("fetch", event => {
   const url = event.request.url;
 
-  // 🔵 Sempre buscar o links.txt da rede (sem cache, sem fallback interno)
+  // 🟦 Força links.txt sempre da rede, sem cache
   if (url.includes("links.txt")) {
     event.respondWith(
       fetch(event.request, { cache: "no-store" })
@@ -61,7 +58,7 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // 🟩 Para os demais arquivos: rede primeiro, depois cache
+  // 🟩 Outros arquivos: rede primeiro, depois cache
   event.respondWith(
     fetch(event.request)
       .then(response => {
@@ -70,9 +67,9 @@ self.addEventListener("fetch", event => {
         return response;
       })
       .catch(async () => {
-        const cachedResponse = await caches.match(event.request);
+        const cached = await caches.match(event.request);
         return (
-          cachedResponse ||
+          cached ||
           new Response("Offline - conteúdo não disponível", {
             headers: { "Content-Type": "text/plain; charset=utf-8" }
           })
@@ -92,7 +89,4 @@ self.addEventListener("message", event => {
   }
 });
 
-// Log de depuração
-console.log(
-  `[PWA] Service Worker ativo — Versão ${versaoCodigo} — Atualizado em ${dataLegivel}`
-);
+console.log(`[PWA] Service Worker ativo — Versão ${versaoCodigo} — Atualizado em ${dataLegivel}`);

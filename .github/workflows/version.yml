@@ -3,7 +3,7 @@ name: 🚀 Gerar versão automática completa para o PWA
 on:
   push:
     branches:
-      - main  # altere para 'master' se seu branch principal for esse
+      - main  # altere para 'master' se for o seu branch principal
 
 permissions:
   contents: write
@@ -16,17 +16,17 @@ jobs:
       - name: 🧾 Clonar repositório completo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necessário para obter histórico de commits
+          fetch-depth: 0  # Necessário para obter histórico completo de commits
 
       - name: 🪵 Log de auditoria
         run: |
           echo "🧱 Build iniciada em $(TZ='America/Sao_Paulo' date +'%d/%m/%Y %H:%M:%S')"
-          echo "👤 Autor do commit: $(git log -1 --pretty=format:'%an')"
-          echo "💬 Mensagem do commit: $(git log -1 --pretty=format:'%s')"
+          echo "👤 Autor: $(git log -1 --pretty=format:'%an')"
+          echo "💬 Mensagem: $(git log -1 --pretty=format:'%s')"
           echo "🌿 Branch: ${{ github.ref_name }}"
           echo "🔢 Execução: ${{ github.run_number }}"
 
-      - name: 🕒 Gerar version.json com dados detalhados
+      - name: 🕒 Gerar version.json
         run: |
           BUILD=$(date +'%Y%m%d%H%M')
           DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
@@ -47,14 +47,14 @@ jobs:
           echo "📦 version.json gerado:"
           cat version.json
 
-      - name: 💾 Commit e Push do version.json
+      - name: 💾 Commit e Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
           git add version.json
-          git commit -m "🧱 Versão automática atualizada: $(TZ='America/Sao_Paulo' date +'%Y-%m-%d %H:%M:%S')" || echo "Sem alterações"
+          git commit -m "🧱 Versão automática: $(TZ='America/Sao_Paulo' date +'%Y-%m-%d %H:%M:%S')" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
 
       - name: ✅ Finalização

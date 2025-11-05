@@ -1,4 +1,4 @@
-name: 🧱 Atualizar histórico de builds (new.json)
+name: 🧱 Atualizar versão e histórico (version.json + new.json)
 
 on:
   push:
@@ -18,35 +18,54 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🕒 Atualizar histórico new.json
+      - name: 🕒 Gerar version.json e atualizar new.json
         run: |
-          echo "⏳ Gerando histórico..."
+          echo "⏳ Gerando versão..."
           BUILD=$(date +'%Y%m%d%H%M')
-          DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin (Horário de Brasília)')
+          DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
           AUTOR=$(git log -1 --pretty=format:'%an')
           MENSAGEM=$(git log -1 --pretty=format:'%s')
+          EXECUCAO=${{ github.run_number }}
+          BRANCH=${{ github.ref_name }}
 
-          # Cria o arquivo se não existir
+          # Cria o version.json no formato desejado
+          cat <<JSON > version.json
+          {
+            "build": "${BUILD}",
+            "data": "${DATA}",
+            "autor": "${AUTOR}",
+            "mensagem": "${MENSAGEM}",
+            "execucao": "${EXECUCAO}",
+            "branch": "${BRANCH}"
+          }
+          JSON
+
+          echo "✅ version.json criado:"
+          cat version.json
+
+          # Cria histórico se não existir
           if [ ! -f new.json ]; then
             echo "[]" > new.json
           fi
 
-          # Adiciona novo registro no topo
+          # Adiciona novo registro ao topo do histórico
           jq --arg b "$BUILD" \
              --arg d "$DATA" \
              --arg a "$AUTOR" \
              --arg m "$MENSAGEM" \
-             '. = [{build: $b, data: $d, autor: $a, mensagem: $m}] + .' new.json > tmp.$$.json && mv tmp.$$.json new.json
+             --arg e "$EXECUCAO" \
+             --arg br "$BRANCH" \
+             '. = [{build: $b, data: $d, autor: $a, mensagem: $m, execucao: $e, branch: $br}] + .' new.json > tmp.$$.json && mv tmp.$$.json new.json
 
-          echo "✅ Histórico atualizado:"
+          echo "📘 new.json atualizado (últimas entradas):"
           tail -n 20 new.json
 
-      - name: 💾 Commit e Push do histórico
+      - name: 💾 Commit e Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
-          git add new.json
-          git commit -m "🧱 Histórico atualizado: $(TZ='America/Sao_Paulo' date +'%d/%m/%Y %H:%M')" || echo "Sem alterações"
+          git add version.json new.json
+          git commit -m "🧱 Versão ${BUILD} registrada em ${DATA}" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}

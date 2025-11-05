@@ -3,8 +3,8 @@ name: 🚀 Deploy automático para o GitHub Pages (main → gh-pages)
 on:
   push:
     branches:
-      - main   # publica sempre que houver atualização no main
-  workflow_dispatch:  # permite acionar manualmente também
+      - main     # publica sempre que houver atualização no main
+  workflow_dispatch:  # também pode rodar manualmente pelo Actions
 
 permissions:
   contents: write
@@ -26,13 +26,12 @@ jobs:
           fetch-depth: 0
 
       - name: 🏗️ Preparar build estático
-  run: |
-    echo "🔧 Preparando build para publicação..."
-    mkdir public
-    shopt -s extglob
-    cp -r !(public) public/
-    echo "✅ Build pronto e sem recursão!"
-
+        run: |
+          echo "🔧 Preparando build para publicação..."
+          mkdir public
+          shopt -s extglob
+          cp -r !(public|.git|.github) public/
+          echo "✅ Build pronto e sem recursão!"
 
       - name: 📦 Upload dos arquivos
         uses: actions/upload-pages-artifact@v3

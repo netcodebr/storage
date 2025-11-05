@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   registrar-deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # 🚫 Evita loop: não roda se o autor for o GitHub Actions
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -42,8 +43,6 @@ jobs:
           echo "commit_curto=${COMMIT_CURTO}" >> $GITHUB_OUTPUT
           echo "url=${URL_DEPLOY}" >> $GITHUB_OUTPUT
 
-          echo "🧱 Deploy #${DEPLOY_NUM} — commit ${COMMIT_CURTO}"
-
       - name: 🚧 Verificar último commit registrado no histórico
         id: check
         run: |
@@ -55,10 +54,8 @@ jobs:
           echo "last_commit=${LAST_COMMIT}" >> $GITHUB_OUTPUT
           if [ "${LAST_COMMIT}" = "${{ steps.vars.outputs.commit }}" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
-            echo "⚠️ Mesmo commit já registrado (${LAST_COMMIT}). Nada a fazer."
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-            echo "✅ Commit novo detectado: ${{ steps.vars.outputs.commit_curto }}"
           fi
 
       - name: 🕒 Gerar version.json (última versão)
@@ -76,8 +73,6 @@ jobs:
             "url": "${{ steps.vars.outputs.url }}"
           }
           JSON
-          echo "📦 version.json:"
-          cat version.json
 
       - name: 📚 Atualizar histórico cumulativo (new.json)
         if: steps.check.outputs.skip == 'false'
@@ -87,10 +82,8 @@ jobs:
           else
             echo "[$(cat version.json)]" > new.json
           fi
-          echo "📚 new.json atualizado:"
-          tail -n +1 new.json
 
-      - name: 💾 Commit e Push
+      - name: 💾 Commit e Push (sem redeploy)
         if: steps.check.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,12 +91,12 @@ jobs:
           git config user.name "GitHub Action (Deploy)"
           git config user.email "actions@github.com"
           git add version.json new.json
-          git commit -m "🧱 Histórico atualizado: Deploy #${{ steps.vars.outputs.deploy_num }} (commit ${{ steps.vars.outputs.commit_curto }})" || echo "Sem alterações"
+          git commit -m "[skip deploy] 🧱 Histórico atualizado: Deploy #${{ steps.vars.outputs.deploy_num }} (commit ${{ steps.vars.outputs.commit_curto }})" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.event.repository.default_branch }}
 
       - name: ✅ Log final
         run: |
-          echo "✅ Finalizado."
+          echo "✅ Finalizado com segurança (anti-loop ativo)."
           echo "Deploy #: ${{ steps.vars.outputs.deploy_num }}"
           echo "Commit:  ${{ steps.vars.outputs.commit }}"
           echo "URL:     ${{ steps.vars.outputs.url }}"

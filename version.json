@@ -1,8 +1,8 @@
 {
   "build": "202511051808",
   "data": "05/11/2025, 15h08min",
-  "autor": "GitHub Pages",
-  "mensagem": "Deploy automático concluído com sucesso",
-  "execucao": "82",
-  "branch": "gh-pages"
+  "autor": "Nelson Ferreira",
+  "mensagem": "Update deploy-version.yml",
+  "execucao": "9",
+  "branch": "main"
 }

@@ -1,10 +1,8 @@
 {
   "build": "202511051835",
-  "data": "05/11/2025, 15h35min (Horário de Brasília)",
-  "autor": "GitHub Pages",
-  "mensagem": "Deploy automático concluído com sucesso",
-  "execucao": "103",
-  "branch": "gh-pages",
-  "commit": "a0ebce16a46b434a4ec56333ebd2b1e0f6d10678",
-  "url": "https://github.com/netcodebr/storage/actions/runs/19112406783"
+  "data": "05/11/2025, 15h35min",
+  "autor": "Nelson Ferreira",
+  "mensagem": "Update deploy-version.yml",
+  "execucao": "17",
+  "branch": "main"
 }

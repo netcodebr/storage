@@ -1,5 +1,11 @@
 [
   {
+    "build": "202511051905",
+    "data": "05/11/2025, 16h05min (Horário de Brasília)",
+    "autor": "Nelson Ferreira",
+    "mensagem": "Update version.yml"
+  },
+  {
     "build": "202511051832",
     "data": "05/11/2025, 15h32min (Horário de Brasília)",
     "autor": "GitHub Pages",

@@ -2,7 +2,7 @@ name: 🧱 Registrar número do deploy (GitHub Pages)
 
 on:
   workflow_run:
-    workflows: ["pages-build-deployment"]  # Escuta o deploy oficial do GitHub Pages
+    workflows: ["pages-build-deployment"]
     types:
       - completed
 
@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   registrar-deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} # ✅ só executa se o deploy teve sucesso
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +20,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🕒 Gerar version.json com número real do deploy
+      - name: ⚙️ Verificar se há commit novo
+        id: verificar
+        run: |
+          COMMIT=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+          if git log -1 --pretty=format:'%H' | grep -q "$COMMIT"; then
+            echo "mesmo_commit=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Mesmo commit detectado, não há deploy novo."
+          else
+            echo "mesmo_commit=false" >> $GITHUB_OUTPUT
+            echo "✅ Novo commit detectado, gerando versão."
+          fi
+
+      - name: 🕒 Gerar version.json (somente se for commit novo)
+        if: steps.verificar.outputs.mesmo_commit == 'false'
         run: |
           BUILD=$(date +'%Y%m%d%H%M')
           DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
@@ -39,7 +53,8 @@ jobs:
           echo "📦 version.json gerado:"
           cat version.json
 
-      - name: 💾 Commit e Push do version.json
+      - name: 💾 Commit e Push (somente se for commit novo)
+        if: steps.verificar.outputs.mesmo_commit == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -49,9 +64,8 @@ jobs:
           git commit -m "🚀 Deploy registrado (GitHub Pages #${{ github.event.workflow_run.run_number }})" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
 
-      - name: ✅ Log de confirmação
+      - name: ✅ Finalização
         run: |
-          echo "🎉 Deploy detectado com sucesso!"
-          echo "🔢 Número do deploy: #${{ github.event.workflow_run.run_number }}"
-          echo "🕒 Horário de Brasília: $(TZ='America/Sao_Paulo' date)"
-          echo "📂 Arquivo version.json atualizado."
+          echo "🎉 Workflow finalizado!"
+          echo "Deploy detectado: #${{ github.event.workflow_run.run_number }}"
+          echo "Horário de Brasília: $(TZ='America/Sao_Paulo' date)"

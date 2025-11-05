@@ -19,6 +19,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # 👇 ESTE BLOCO É OBRIGATÓRIO para GitHub Pages funcionar
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: 📥 Checkout código do main
         uses: actions/checkout@v4
@@ -39,4 +44,5 @@ jobs:
           path: ./public
 
       - name: 🌐 Publicar no branch gh-pages
+        id: deployment
         uses: actions/deploy-pages@v4

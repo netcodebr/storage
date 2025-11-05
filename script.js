@@ -41,12 +41,25 @@ carregarLinks();
 
 // ====== MOSTRA VERSÃO LEGÍVEL DO SERVICE WORKER ======
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.ready.then(reg => reg.active.postMessage({ type: "GET_VERSION" }));
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active.postMessage({ type: "GET_VERSION" });
+  });
 
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data && event.data.type === "VERSION") {
       const versaoEl = document.getElementById("versao");
-      versaoEl.textContent = `Versão automática — Atualizada em ${event.data.dataLegivel}`;
+
+      // 🔧 Formata data local para padrão institucional
+      const agora = new Date();
+      const dia = String(agora.getDate()).padStart(2, "0");
+      const mes = String(agora.getMonth() + 1).padStart(2, "0");
+      const ano = agora.getFullYear();
+      const hora = String(agora.getHours()).padStart(2, "0");
+      const min = String(agora.getMinutes()).padStart(2, "0");
+      const dataFormatada = `${dia}/${mes}/${ano} - ${hora}h${min}`;
+
+      // 🔠 Exibe de forma uniforme em todos dispositivos
+      versaoEl.textContent = `Versão automática — Atualizada em ${dataFormatada}`;
     }
   });
 }

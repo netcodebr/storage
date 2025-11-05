@@ -1,56 +1,105 @@
 // =============================
-// 🔄 SERVICE WORKER - Rede primeiro + versão sincronizada com o GitHub
+// ⚙️ SERVICE WORKER — Repositório PWA Profissional
+// Estratégia: Rede primeiro, fallback pro cache
+// version.json sempre vem da rede (sem cache)
 // =============================
 
-const CACHE_NAME = "repositorio-v14";
+// Gera código de versão fixo (baseado na data de build)
+const agora = new Date();
+const versaoCodigo = agora
+  .toISOString()
+  .slice(0, 16)
+  .replace(/[-:T]/g, "")
+  .slice(0, 12); // Exemplo: 202511061245
+
+const dia = String(agora.getDate()).padStart(2, "0");
+const mes = String(agora.getMonth() + 1).padStart(2, "0");
+const ano = agora.getFullYear();
+const hora = String(agora.getHours()).padStart(2, "0");
+const min = String(agora.getMinutes()).padStart(2, "0");
+const dataLegivel = `${dia}/${mes}/${ano}, ${hora}h${min}min (Horário de Brasília)`;
+
+// Nome do cache principal
+const CACHE_NAME = "repositorio-cache-" + versaoCodigo;
+
+// Lista de arquivos essenciais (cache básico para modo offline)
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./script.js",
+  "./links.txt",
   "./manifest.webmanifest",
   "./icons/icon-96.png",
-  "./linksoff.txt"
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./new.json"
 ];
 
-// Instala o SW e guarda apenas arquivos básicos
+// Instala o SW e adiciona arquivos básicos ao cache
 self.addEventListener("install", event => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS);
+    })
+  );
 });
 
-// Remove caches antigos
+// Ativa nova versão e remove caches antigos
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      );
+    })
   );
   clients.claim();
 });
 
-// Estratégia: rede primeiro SEMPRE (ignora cache local)
+// =============================
+// 🔄 Fetch — Rede primeiro, mas:
+// version.json -> sempre rede
+// links.txt -> sempre rede se possível
+// demais arquivos -> cache se offline
+// =============================
 self.addEventListener("fetch", event => {
-  const url = event.request.url;
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Sempre busca da rede esses arquivos dinâmicos
-  if (url.includes("links.txt") || url.includes("version.json")) {
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
+  // Sempre buscar o version.json direto da rede (sem cache)
+  if (url.pathname.endsWith("/version.json")) {
+    event.respondWith(fetch(req).catch(() => caches.match(req)));
     return;
   }
 
-  // Outros arquivos → tenta rede, cai no cache se offline
+  // Buscar sempre o links.txt direto da rede (pra refletir novos projetos)
+  if (url.pathname.endsWith("/links.txt")) {
+    event.respondWith(
+      fetch(req)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+          return response;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Estratégia geral: rede primeiro, fallback pro cache
   event.respondWith(
-    fetch(event.request, { cache: "no-store" })
+    fetch(req)
       .then(response => {
         const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
         return response;
       })
       .catch(async () => {
-        const cached = await caches.match(event.request);
+        const cachedResponse = await caches.match(req);
         return (
-          cached ||
+          cachedResponse ||
           new Response("Offline - conteúdo não disponível", {
             headers: { "Content-Type": "text/plain; charset=utf-8" }
           })
@@ -59,25 +108,26 @@ self.addEventListener("fetch", event => {
   );
 });
 
-// Envia versão/hora do GitHub para o front-end
-self.addEventListener("message", async event => {
+// =============================
+// 📤 Comunicação com o front-end
+// =============================
+self.addEventListener("message", event => {
   if (event.data && event.data.type === "GET_VERSION") {
-    try {
-      const response = await fetch("version.json?cache=" + Date.now());
-      const data = await response.json();
-      event.source.postMessage({
-        type: "VERSION",
-        versao: data.build,
-        data: data.data
-      });
-    } catch (error) {
-      event.source.postMessage({
-        type: "VERSION",
-        versao: "Indisponível",
-        data: "Offline"
-      });
-    }
+    event.source.postMessage({
+      type: "VERSION",
+      versao: versaoCodigo,
+      data: dataLegivel
+    });
+  }
+
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
   }
 });
 
-console.log("[PWA] Service Worker ativo — Versão e hora puxadas direto do GitHub.");
+// =============================
+// 🪵 Log (para debug no console)
+// =============================
+console.log(
+  `[PWA] Service Worker ativo — Versão ${versaoCodigo} — Atualizado em ${dataLegivel}`
+);

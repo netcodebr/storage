@@ -1,20 +1,29 @@
 // =============================
-// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO COM ALERTA AUTOMÁTICO
+// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO COM FALLBACK AUTOMÁTICO linksoff.txt
 // =============================
 
-// Carrega a lista de links do repositório
-async function carregarLinks() {
+// Adiciona SweetAlert2
+const sweet = document.createElement("script");
+sweet.src = "https://cdn.jsdelivr.net/npm/sweetalert2@11";
+document.head.appendChild(sweet);
+
+// =============================
+// 🧠 Função principal para carregar os links
+// =============================
+async function carregarLinks(arquivo = "links.txt") {
   const lista = document.getElementById("lista");
 
   try {
-    const resposta = await fetch("links.txt");
+    const resposta = await fetch(arquivo, { cache: "no-store" });
+    if (!resposta.ok) throw new Error("Erro ao buscar arquivo: " + arquivo);
+
     const texto = await resposta.text();
     const urls = texto.split(/\r?\n/).filter(l => l.trim() !== "");
 
     lista.innerHTML = "";
 
     if (urls.length === 0) {
-      lista.innerHTML = "<p class='mensagem-carregando'>Nenhum link encontrado no repositório.</p>";
+      lista.innerHTML = "<p class='mensagem-carregando'>Nenhum link encontrado.</p>";
       return;
     }
 
@@ -36,22 +45,40 @@ async function carregarLinks() {
       `;
       lista.appendChild(div);
     }
+
+    console.log(`[PWA] Arquivo carregado com sucesso: ${arquivo}`);
   } catch (err) {
-    lista.innerHTML = "<p class='mensagem-carregando'>Erro ao carregar os projetos.</p>";
-    console.error("Erro:", err);
+    console.warn(`[PWA] Falha ao carregar ${arquivo}:`, err);
+
+    if (arquivo === "links.txt") {
+      // Se falhou o principal, tenta carregar o de fallback (offline)
+      carregarLinks("linksoff.txt");
+
+      sweet.onload = () => {
+        Swal.fire({
+          title: "Modo Offline Ativado",
+          text: "Sem conexão. Mostrando lista offline (linksoff.txt).",
+          icon: "warning",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#004aad",
+          background: "#f5f7fa",
+          color: "#004aad",
+          backdrop: "rgba(0,0,0,0.4)"
+        });
+      };
+    } else {
+      // Caso o linksoff.txt também falhe
+      lista.innerHTML = "<p class='mensagem-carregando'>Não foi possível carregar os projetos.</p>";
+    }
   }
 }
 
+// Carrega inicialmente (começa pelo online)
 carregarLinks();
 
 // =============================
-// 🧭 SERVICE WORKER + SWEETALERT2 (alerta automático)
+// 🧭 SERVICE WORKER + ALERTA AUTOMÁTICO
 // =============================
-
-// Adiciona SweetAlert2 (biblioteca visual)
-const sweet = document.createElement("script");
-sweet.src = "https://cdn.jsdelivr.net/npm/sweetalert2@11";
-document.head.appendChild(sweet);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
@@ -59,41 +86,29 @@ if ("serviceWorker" in navigator) {
     .then(() => console.log("[PWA] Service Worker registrado com sucesso."))
     .catch(err => console.error("[PWA] Falha ao registrar SW:", err));
 
-  // Função para exibir a versão no rodapé
   function exibirVersao(versao, data) {
     const versaoEl = document.getElementById("versao");
     versaoEl.textContent = `Versão — ${versao} — Atualizada em ${data}`;
   }
 
-  // Carrega dados salvos (para manter fixo entre recarregamentos)
   const versaoSalva = localStorage.getItem("versaoCodigo");
   const dataSalva = localStorage.getItem("versaoData");
+  if (versaoSalva && dataSalva) exibirVersao(versaoSalva, dataSalva);
 
-  if (versaoSalva && dataSalva) {
-    exibirVersao(versaoSalva, dataSalva);
-  }
-
-  // Solicita a versão atual ao service worker
   navigator.serviceWorker.ready.then(reg => {
     reg.active.postMessage({ type: "GET_VERSION" });
   });
 
-  // Recebe mensagem do SW com versão e data
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data && event.data.type === "VERSION") {
       const versaoCodigo = event.data.versao || "????";
       const dataAtualizacao = event.data.data || "Data desconhecida";
 
       const versaoAnterior = localStorage.getItem("versaoCodigo");
-      const dataAnterior = localStorage.getItem("versaoData");
-
-      // Detecta nova versão
       if (versaoCodigo !== versaoAnterior) {
-        // Salva nova versão
         localStorage.setItem("versaoCodigo", versaoCodigo);
         localStorage.setItem("versaoData", dataAtualizacao);
 
-        // Mostra alerta elegante de atualização automática
         sweet.onload = () => {
           Swal.fire({
             title: "Nova versão detectada!",
@@ -108,7 +123,6 @@ if ("serviceWorker" in navigator) {
         };
       }
 
-      // Atualiza exibição no rodapé
       exibirVersao(versaoCodigo, dataAtualizacao);
       console.log(`[PWA] Versão fixa — ${versaoCodigo} — ${dataAtualizacao}`);
     }

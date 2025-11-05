@@ -1,8 +1,8 @@
 {
-  "build": "202511051915",
-  "data": "05/11/2025, 16h15min",
+  "build": "202511051926",
+  "data": "05/11/2025, 16h26min",
   "autor": "Nelson Ferreira",
-  "mensagem": "Update version.yml",
-  "execucao": "29",
+  "mensagem": "Update service-worker.js",
+  "execucao": "30",
   "branch": "main"
 }

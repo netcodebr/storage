@@ -1,13 +1,26 @@
 // =============================
-// 🔄 SERVICE WORKER - Rede primeiro + versão automática legível
+// 🔄 SERVICE WORKER - Rede primeiro + versão automática fixa
 // =============================
 
-// Gera versão automática (ex: repositorio-cache-20251105-1342)
-const dataAgora = new Date();
-const dataFormatada = dataAgora.toISOString().slice(0, 16).replace(/[-:T]/g, "");
-const CACHE_NAME = "repositorio-cache-" + dataFormatada;
+// Cria data atual e gera código da versão no formato AAAAMMDDHHMM
+const agora = new Date();
+const versaoCodigo = agora
+  .toISOString()
+  .slice(0, 16)
+  .replace(/[-:T]/g, "")
+  .slice(0, 12); // Ex: 202511051505
 
-// Lista de arquivos essenciais para cache inicial
+// Gera data legível (fixa)
+const dia = String(agora.getDate()).padStart(2, "0");
+const mes = String(agora.getMonth() + 1).padStart(2, "0");
+const ano = agora.getFullYear();
+const hora = String(agora.getHours()).padStart(2, "0");
+const min = String(agora.getMinutes()).padStart(2, "0");
+const dataLegivel = `${dia}/${mes}/${ano}, ${hora}h${min}`;
+
+const CACHE_NAME = "repositorio-cache-" + versaoCodigo;
+
+// Lista de arquivos essenciais
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,15 +31,13 @@ const ASSETS = [
   "./icons/icon-96.png"
 ];
 
-// Instala o SW e salva os arquivos básicos
+// Instala e salva os arquivos básicos
 self.addEventListener("install", event => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-// Ativa o SW, limpa caches antigos e assume controle
+// Ativa nova versão e remove caches antigos
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -36,7 +47,7 @@ self.addEventListener("activate", event => {
   clients.claim();
 });
 
-// Estratégia: rede primeiro, fallback para cache
+// Estratégia: rede primeiro, fallback pro cache
 self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(event.request)
@@ -57,21 +68,18 @@ self.addEventListener("fetch", event => {
   );
 });
 
-// Envia a versão e data legível para o front-end
+// Envia versão e data fixa para o front-end
 self.addEventListener("message", event => {
   if (event.data && event.data.type === "GET_VERSION") {
-    const dataLocal = new Date().toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
     event.source.postMessage({
       type: "VERSION",
-      value: CACHE_NAME,
-      dataLegivel: dataLocal
+      versao: versaoCodigo,
+      data: dataLegivel
     });
   }
 });
+
+// Log opcional (para debug)
+console.log(
+  `[PWA] Service Worker ativo — Versão ${versaoCodigo} — Atualizado em ${dataLegivel}`
+);

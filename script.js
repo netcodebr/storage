@@ -1,3 +1,7 @@
+// =============================
+// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO
+// =============================
+
 async function carregarLinks() {
   const lista = document.getElementById("lista");
 
@@ -39,27 +43,29 @@ async function carregarLinks() {
 
 carregarLinks();
 
-// ====== MOSTRA VERSÃO LEGÍVEL DO SERVICE WORKER ======
-if ('serviceWorker' in navigator) {
+// =============================
+// 🧭 SERVICE WORKER E VERSÃO FIXA
+// =============================
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("service-worker.js")
+    .then(() => console.log("[PWA] Service Worker registrado com sucesso."))
+    .catch(err => console.error("[PWA] Falha ao registrar SW:", err));
+
+  // Solicita a versão assim que o SW estiver pronto
   navigator.serviceWorker.ready.then(reg => {
     reg.active.postMessage({ type: "GET_VERSION" });
   });
 
+  // Recebe a versão e exibe no rodapé
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data && event.data.type === "VERSION") {
       const versaoEl = document.getElementById("versao");
-
-      // 🔧 Formata data local para padrão institucional
-      const agora = new Date();
-      const dia = String(agora.getDate()).padStart(2, "0");
-      const mes = String(agora.getMonth() + 1).padStart(2, "0");
-      const ano = agora.getFullYear();
-      const hora = String(agora.getHours()).padStart(2, "0");
-      const min = String(agora.getMinutes()).padStart(2, "0");
-      const dataFormatada = `${dia}/${mes}/${ano} - ${hora}h${min}`;
-
-      // 🔠 Exibe de forma uniforme em todos dispositivos
-      versaoEl.textContent = `Versão automática — Atualizada em ${dataFormatada}`;
+      const versaoCodigo = event.data.versao || "????";
+      const dataAtualizacao = event.data.data || "Data desconhecida";
+      versaoEl.textContent = `Versão — ${versaoCodigo} — Atualizada em ${dataAtualizacao}`;
+      console.log(`[PWA] Versão recebida — ${versaoCodigo} — ${dataAtualizacao}`);
     }
   });
 }

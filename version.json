@@ -1,8 +1,8 @@
 {
-  "build": "202511051844",
-  "data": "05/11/2025, 15h44min",
+  "build": "202511051849",
+  "data": "05/11/2025, 15h49min",
   "autor": "Nelson Ferreira",
-  "mensagem": "Delete .github/workflows/deploy-version.yml",
-  "execucao": "18",
+  "mensagem": "Update deploy.yml",
+  "execucao": "19",
   "branch": "main"
 }

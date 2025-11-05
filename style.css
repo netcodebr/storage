@@ -143,22 +143,6 @@ h1 {
   color: #c5c8d2;
 }
 
-.card small[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  top: 100%;
-  left: 0;
-  white-space: nowrap;
-  transform: translateY(4px);
-  pointer-events: none;
-  z-index: 10;
-}
-
 /* ===== FOOTER ===== */
 footer {
   text-align: center;
@@ -171,22 +155,44 @@ footer {
 /* ===== BANNER DE ATUALIZAÇÃO ===== */
 .update-banner {
   position: fixed;
-  bottom: -60px;
+  bottom: 80px; /* visível acima da barra inferior */
   left: 50%;
-  transform: translateX(-50%);
-  background: var(--cor-secundaria);
+  transform: translateX(-50%) translateY(100%);
+  background: linear-gradient(90deg, var(--cor-secundaria), var(--cor-acento));
   color: #fff;
-  padding: 12px 24px;
-  border-radius: 8px 8px 0 0;
+  padding: 14px 28px;
+  border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 500;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
-  transition: bottom 0.4s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.6s ease;
   z-index: 1000;
 }
 
 .update-banner.show {
-  bottom: 0;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: all;
+  animation: slideUp 0.4s ease;
+}
+
+.update-banner.hide {
+  opacity: 0;
+  transform: translateX(-50%) translateY(50px);
+  pointer-events: none;
+  animation: slideDown 0.6s ease forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(40px); opacity: 0; }
 }
 
 /* ===== RESPONSIVIDADE ===== */

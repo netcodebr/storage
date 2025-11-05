@@ -47,24 +47,36 @@
   <div id="update-banner" class="update-banner">Atualizando para a nova versão...</div>
 
   <script src="script.js"></script>
+
+  <!-- 🔄 Controle de atualização automática -->
   <script>
-    // Detecta atualização de versão e recarrega
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').then(reg => {
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated') {
-              const banner = document.getElementById('update-banner');
-              banner.classList.add('show');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            const banner = document.getElementById('update-banner');
+            banner.textContent = "Atualizando para a nova versão...";
+            banner.classList.add('show');
+
+            setTimeout(() => {
+              banner.textContent = "✔ Nova versão aplicada";
+              banner.style.background = "linear-gradient(90deg, #16a34a, #22c55e)";
+            }, 1500);
+
+            setTimeout(() => {
+              banner.classList.remove('show');
+              banner.classList.add('hide');
               setTimeout(() => {
                 window.location.reload();
-              }, 1800);
-            }
-          });
+              }, 600);
+            }, 3000);
+          }
         });
-      }).catch(err => console.error('Erro ao registrar SW:', err));
-    }
+      });
+    }).catch(err => console.error('Erro ao registrar SW:', err));
+  }
   </script>
 </body>
 </html>

@@ -1,7 +1,4 @@
-// ====== ALTERE ESTE NÚMERO QUANDO ATUALIZAR ======
 const CACHE_NAME = "repositorio-cache-v3";
-// ================================================
-
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,10 +10,8 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", event => {
-  self.skipWaiting(); // ativa imediatamente
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
 self.addEventListener("activate", event => {
@@ -25,7 +20,7 @@ self.addEventListener("activate", event => {
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
-  clients.claim(); // força uso imediato
+  clients.claim();
 });
 
 self.addEventListener("fetch", event => {
@@ -34,9 +29,7 @@ self.addEventListener("fetch", event => {
       response ||
       fetch(event.request)
         .then(networkResponse => {
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, networkResponse.clone());
-          });
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
           return networkResponse;
         })
         .catch(() =>
@@ -48,7 +41,6 @@ self.addEventListener("fetch", event => {
   );
 });
 
-// ✅ Envia a versão do cache para o front-end
 self.addEventListener("message", event => {
   if (event.data && event.data.type === "GET_VERSION") {
     event.source.postMessage({ type: "VERSION", value: CACHE_NAME });

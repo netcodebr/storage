@@ -57,65 +57,65 @@ if ("serviceWorker" in navigator) {
 
   const versaoEl = document.getElementById("versao");
   function exibirVersao(v, d) {
-    versaoEl.textContent = `Versão — ${v} — Atualizada em ${d} (Horário de Brasília)`;
+    versaoEl.textContent = `Versão — ${v} — Registrada em ${d}`;
   }
 
-  // Mostra versão salva (para evitar "piscar")
+  // Recupera versão salva localmente
   const vSalva = localStorage.getItem("versaoCodigo");
   const dSalva = localStorage.getItem("versaoData");
   if (vSalva && dSalva) exibirVersao(vSalva, dSalva);
 
-  navigator.serviceWorker.ready.then(reg => {
-    reg.active.postMessage({ type: "GET_VERSION" });
-  });
+  // Sempre busca a versão mais recente do GitHub
+  async function verificarVersaoGitHub() {
+    try {
+      const resposta = await fetch(`version.json?nocache=${Date.now()}`);
+      const json = await resposta.json();
 
-  // Recebe dados do Service Worker
-  navigator.serviceWorker.addEventListener("message", async event => {
-    if (event.data && event.data.type === "VERSION") {
-      const { versao, data } = event.data;
-      const antiga = localStorage.getItem("versaoCodigo");
+      const novaVersao = json.build;
+      const antigaVersao = localStorage.getItem("versaoCodigo");
 
-      try {
-        const res = await fetch("version.json?cache=" + Date.now());
-        const json = await res.json();
+      const autor = json.autor || "Desconhecido";
+      const mensagem = json.mensagem || "Atualização de versão";
+      const execucao = json.execucao || "N/A";
+      const branch = json.branch || "main";
+      const dataFormatada = json.data || "—";
 
-        const autor = json.autor || "Desconhecido";
-        const mensagem = json.mensagem || "Atualização de versão";
-        const execucao = json.execucao || "N/A";
-        const branch = json.branch || "main";
-        const dataFormatada = json.data || data;
+      // Só alerta se realmente houver nova versão
+      if (novaVersao !== antigaVersao) {
+        localStorage.setItem("versaoCodigo", novaVersao);
+        localStorage.setItem("versaoData", dataFormatada);
 
-        if (versao !== antiga && versao !== "Indisponível") {
-          localStorage.setItem("versaoCodigo", versao);
-          localStorage.setItem("versaoData", dataFormatada);
-
-          Swal.fire({
-            title: "Nova versão detectada!",
-            html: `
-              <div style="text-align:left;font-size:0.95rem;">
-                🧱 <b>Versão:</b> ${versao}<br>
-                💬 <b>Mensagem:</b> ${mensagem}<br>
-                👤 <b>Autor:</b> ${autor}<br>
-                🌿 <b>Branch:</b> ${branch}<br>
-                🔢 <b>Execução:</b> ${execucao}<br>
-                ⏰ <b>Data:</b> ${dataFormatada} (Horário de Brasília)
-              </div>
-            `,
-            icon: "info",
-            showConfirmButton: false,
-            timer: 4000,
-            background: "#f5f7fa",
-            color: "#004aad"
-          });
-        }
-
-        exibirVersao(versao, dataFormatada);
-      } catch (err) {
-        console.warn("[PWA] Falha ao obter dados completos da versão:", err);
-        exibirVersao(versao, data);
+        Swal.fire({
+          title: "Nova versão detectada!",
+          html: `
+            <div style="text-align:left;font-size:0.95rem;">
+              🧱 <b>Versão:</b> ${novaVersao}<br>
+              💬 <b>Mensagem:</b> ${mensagem}<br>
+              👤 <b>Autor:</b> ${autor}<br>
+              🌿 <b>Branch:</b> ${branch}<br>
+              🔢 <b>Execução:</b> ${execucao}<br>
+              ⏰ <b>Registrada em:</b> ${dataFormatada}
+            </div>
+          `,
+          icon: "info",
+          showConfirmButton: false,
+          timer: 4500,
+          background: "#f5f7fa",
+          color: "#004aad"
+        });
       }
+
+      exibirVersao(novaVersao, dataFormatada);
+    } catch (err) {
+      console.warn("[PWA] Erro ao verificar version.json:", err);
     }
-  });
+  }
+
+  // Verifica a versão mais recente do GitHub
+  verificarVersaoGitHub();
+
+  // Atualiza service worker e força sincronização
+  navigator.serviceWorker.ready.then(reg => reg.update());
 }
 
 // =============================

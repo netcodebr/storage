@@ -3,17 +3,28 @@ name: 🚀 Gerar versão automática completa para o PWA
 on:
   push:
     branches:
-      - main  # ou 'master' se for o nome do seu branch
+      - main  # altere se o nome do seu branch for 'master'
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Clonar repositório com histórico completo
+      - name: 🧾 Clonar repositório completo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 👈 Importante! Permite ler o histórico completo do git log
+          fetch-depth: 0  # 🔥 Necessário para capturar autor e mensagem do commit
+
+      - name: 🪵 Log de auditoria
+        run: |
+          echo "🧱 Build iniciada em $(TZ='America/Sao_Paulo' date +'%d/%m/%Y %H:%M:%S')"
+          echo "👤 Autor do commit: $(git log -1 --pretty=format:'%an')"
+          echo "💬 Mensagem do commit: $(git log -1 --pretty=format:'%s')"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🔢 Execução: ${{ github.run_number }}"
 
       - name: 🕒 Gerar version.json com dados detalhados
         run: |
@@ -21,12 +32,16 @@ jobs:
           DATA=$(TZ='America/Sao_Paulo' date +'%d/%m/%Y, %Hh%Mmin')
           AUTOR=$(git log -1 --pretty=format:'%an')
           MENSAGEM=$(git log -1 --pretty=format:'%s')
+          EXECUCAO=${{ github.run_number }}
+          BRANCH=${{ github.ref_name }}
 
           echo "{" > version.json
           echo "  \"build\": \"${BUILD}\"," >> version.json
           echo "  \"data\": \"${DATA}\"," >> version.json
           echo "  \"autor\": \"${AUTOR}\"," >> version.json
-          echo "  \"mensagem\": \"${MENSAGEM}\"" >> version.json
+          echo "  \"mensagem\": \"${MENSAGEM}\"," >> version.json
+          echo "  \"execucao\": \"${EXECUCAO}\"," >> version.json
+          echo "  \"branch\": \"${BRANCH}\"" >> version.json
           echo "}" >> version.json
 
           cat version.json
@@ -38,5 +53,13 @@ jobs:
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
           git add version.json
-          git commit -m "🧱 Versão automática atualizada: $(date +'%Y-%m-%d %H:%M')" || echo "Sem alterações"
+          git commit -m "🧱 Versão automática atualizada: $(TZ='America/Sao_Paulo' date +'%Y-%m-%d %H:%M:%S')" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+
+      - name: ✅ Finalização
+        run: |
+          echo "🎉 Versão gerada com sucesso!"
+          echo "📦 Build: $(date +'%Y%m%d%H%M')"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🔢 Execução: ${{ github.run_number }}"
+          echo "🕒 Horário de Brasília: $(TZ='America/Sao_Paulo' date)"

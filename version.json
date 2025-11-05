@@ -1,8 +1,8 @@
 {
-  "build": "202511051812",
-  "data": "05/11/2025, 15h12min",
+  "build": "202511051818",
+  "data": "05/11/2025, 15h18min",
   "autor": "Nelson Ferreira",
-  "mensagem": "Update links.txt",
-  "execucao": "11",
+  "mensagem": "Create deploy.yml",
+  "execucao": "12",
   "branch": "main"
 }

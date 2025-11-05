@@ -1,5 +1,5 @@
 // =============================
-// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO COM FALLBACK AUTOMÁTICO linksoff.txt
+// 📂 SCRIPT PRINCIPAL DO REPOSITÓRIO - com fallback linksoff.txt + alertas automáticos
 // =============================
 
 // Adiciona SweetAlert2
@@ -51,7 +51,7 @@ async function carregarLinks(arquivo = "links.txt") {
     console.warn(`[PWA] Falha ao carregar ${arquivo}:`, err);
 
     if (arquivo === "links.txt") {
-      // Se falhou o principal, tenta carregar o de fallback (offline)
+      // Se falhou o principal, tenta o offline
       carregarLinks("linksoff.txt");
 
       sweet.onload = () => {
@@ -67,17 +67,16 @@ async function carregarLinks(arquivo = "links.txt") {
         });
       };
     } else {
-      // Caso o linksoff.txt também falhe
       lista.innerHTML = "<p class='mensagem-carregando'>Não foi possível carregar os projetos.</p>";
     }
   }
 }
 
-// Carrega inicialmente (começa pelo online)
+// Inicia o carregamento padrão
 carregarLinks();
 
 // =============================
-// 🧭 SERVICE WORKER + ALERTA AUTOMÁTICO
+// 🧭 SERVICE WORKER + ALERTA DE NOVA VERSÃO
 // =============================
 
 if ("serviceWorker" in navigator) {

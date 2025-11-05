@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   registrar-deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }} # ✅ só executa se o deploy teve sucesso
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -23,16 +23,19 @@ jobs:
       - name: ⚙️ Verificar se há commit novo
         id: verificar
         run: |
-          COMMIT=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
-          if git log -1 --pretty=format:'%H' | grep -q "$COMMIT"; then
+          COMMIT_DEPLOY=${{ github.event.workflow_run.head_sha }}
+          COMMIT_CURTO=$(echo "${COMMIT_DEPLOY}" | cut -c1-7)
+          echo "🧾 Commit do deploy: ${COMMIT_CURTO}"
+
+          if git log -1 --pretty=format:'%H' | grep -q "$COMMIT_DEPLOY"; then
             echo "mesmo_commit=true" >> $GITHUB_OUTPUT
             echo "⚠️ Mesmo commit detectado, não há deploy novo."
           else
             echo "mesmo_commit=false" >> $GITHUB_OUTPUT
-            echo "✅ Novo commit detectado, gerando versão."
+            echo "✅ Novo commit detectado, gerando registro."
           fi
 
-      - name: 🕒 Gerar version.json (somente se for commit novo)
+      - name: 🕒 Gerar version.json e atualizar histórico (new.json)
         if: steps.verificar.outputs.mesmo_commit == 'false'
         run: |
           BUILD=$(date +'%Y%m%d%H%M')
@@ -40,32 +43,48 @@ jobs:
           DEPLOY_NUM=${{ github.event.workflow_run.run_number }}
           AUTOR="GitHub Pages"
           MENSAGEM="Deploy automático concluído com sucesso"
+          COMMIT_DEPLOY=${{ github.event.workflow_run.head_sha }}
 
+          # Cria o version.json (último deploy)
           echo "{" > version.json
           echo "  \"build\": \"${BUILD}\"," >> version.json
           echo "  \"data\": \"${DATA}\"," >> version.json
           echo "  \"autor\": \"${AUTOR}\"," >> version.json
           echo "  \"mensagem\": \"${MENSAGEM}\"," >> version.json
           echo "  \"execucao\": \"${DEPLOY_NUM}\"," >> version.json
-          echo "  \"branch\": \"gh-pages\"" >> version.json
+          echo "  \"branch\": \"gh-pages\"," >> version.json
+          echo "  \"commit\": \"${COMMIT_DEPLOY}\"" >> version.json
           echo "}" >> version.json
 
           echo "📦 version.json gerado:"
           cat version.json
 
-      - name: 💾 Commit e Push (somente se for commit novo)
+          # Atualiza histórico cumulativo
+          if [ -f new.json ]; then
+            echo "📜 Atualizando histórico existente..."
+            jq ". + [$(cat version.json)]" new.json > temp.json && mv temp.json new.json
+          else
+            echo "📜 Criando novo arquivo de histórico..."
+            echo "[$(cat version.json)]" > new.json
+          fi
+
+          echo "📚 Histórico atualizado:"
+          cat new.json
+
+      - name: 💾 Commit e Push
         if: steps.verificar.outputs.mesmo_commit == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Action (Deploy)"
           git config user.email "actions@github.com"
-          git add version.json
-          git commit -m "🚀 Deploy registrado (GitHub Pages #${{ github.event.workflow_run.run_number }})" || echo "Sem alterações"
+          git add version.json new.json
+          git commit -m "🧱 Histórico atualizado: Deploy #${{ github.event.workflow_run.run_number }}" || echo "Sem alterações"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
 
-      - name: ✅ Finalização
+      - name: 🔍 Log final
         run: |
-          echo "🎉 Workflow finalizado!"
-          echo "Deploy detectado: #${{ github.event.workflow_run.run_number }}"
+          echo "✅ Registro concluído!"
+          echo "Deploy #: ${{ github.event.workflow_run.run_number }}"
+          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
           echo "Horário de Brasília: $(TZ='America/Sao_Paulo' date)"

@@ -3,7 +3,7 @@ name: 🚀 Gerar versão automática completa para o PWA
 on:
   push:
     branches:
-      - main  # altere se o nome do seu branch for 'master'
+      - main  # altere para 'master' se seu branch principal for esse
 
 permissions:
   contents: write
@@ -16,7 +16,7 @@ jobs:
       - name: 🧾 Clonar repositório completo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 🔥 Necessário para capturar autor e mensagem do commit
+          fetch-depth: 0  # Necessário para obter histórico de commits
 
       - name: 🪵 Log de auditoria
         run: |
@@ -44,6 +44,7 @@ jobs:
           echo "  \"branch\": \"${BRANCH}\"" >> version.json
           echo "}" >> version.json
 
+          echo "📦 version.json gerado:"
           cat version.json
 
       - name: 💾 Commit e Push do version.json
